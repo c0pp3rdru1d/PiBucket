@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{{ title }}</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
+      .muted { opacity: 0.7; }
+      table { border-collapse: collapse; width: 100%; margin-top: 16px; }
+      th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
+      th { position: sticky; top: 0; background: #fff; }
+      .pill { display:inline-block; padding: 2px 8px; border: 1px solid #ccc; border-radius: 999px; font-size: 12px; }
+      .row { display:flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+      button { padding: 8px 12px; border-radius: 10px; border: 1px solid #ccc; background: #f6f6f6; cursor: pointer; }
+      button:hover { background: #eee; }
+      code { background:#f4f4f4; padding: 2px 6px; border-radius: 8px; }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <h1 style="margin:0;">{{ title }}</h1>
+      <span class="pill">CIDR: {{ cidr }}</span>
+      <span class="pill">Known devices: {{ count }}</span>
+    </div>
+    <div class="muted" style="margin-top:8px;">
+      API: <code>/api/devices</code> • Scan endpoint: <code>POST /api/scan?token=...</code>
+    </div>
+
+    <div style="margin-top:16px;">
+      <button onclick="runScan()">Scan now</button>
+      <span id="scanStatus" class="muted" style="margin-left:12px;"></span>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>IP</th>
+          <th>MAC</th>
+          <th>Hostname</th>
+          <th>First seen</th>
+          <th>Last seen</th>
+          <th>Seen #</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in devices %}
+        <tr>
+          <td>{{ d.ip }}</td>
+          <td>{{ d.mac }}</td>
+          <td>{{ d.hostname or "" }}</td>
+          <td>{{ d.first_seen }}</td>
+          <td>{{ d.last_seen }}</td>
+          <td>{{ d.seen_count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <script>
+      async function runScan() {
+        const status = document.getElementById("scanStatus");
+        status.textContent = "Scanning...";
+        // If you set LANWATCH_TOKEN, add ?token=THE_TOKEN below.
+        const res = await fetch("/api/scan", { method: "POST" });
+        const data = await res.json();
+        if (!res.ok) {
+          status.textContent = "Scan failed: " + (data.detail || res.status);
+          return;
+        }
+        status.textContent = `Scan ok: ${data.scanned} devices`;
+        setTimeout(() => location.reload(), 600);
+      }
+    </script>
+  </body>
+</html>
+
