@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{{ title }}</title>
+    <style>
+      :root {
+        --bg:#0b0f14; --panel:#0f1620; --text:#e8eef6; --muted:rgba(232,238,246,.7);
+        --border:rgba(232,238,246,.14); --btn:#121b26; --btnHover:#172234; --pill:rgba(232,238,246,.08);
+      }
+      body { margin:24px; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--text); }
+      .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+      h1 { margin:0; font-size:22px; }
+      .pill { padding:4px 10px; border:1px solid var(--border); border-radius:999px; font-size:12px; background:var(--pill); }
+      .card { margin-top:16px; padding:14px; border-radius:14px; background:var(--panel); border:1px solid var(--border); }
+      button { padding:8px 12px; border-radius:12px; border:1px solid var(--border); background:var(--btn); color:var(--text); cursor:pointer; }
+      button:hover { background:var(--btnHover); }
+      table { border-collapse:collapse; width:100%; margin-top:12px; border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+      th, td { border-bottom:1px solid var(--border); padding:10px; text-align:left; }
+      th { background:var(--panel); position:sticky; top:0; }
+      .muted { color:var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="row">
+      <h1>{{ title }}</h1>
+      <span class="pill">CIDR: {{ cidr }}</span>
+      <span class="pill">Known devices: {{ count }}</span>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <button onclick="runScan()">Scan now</button>
+        <span id="status" class="muted"></span>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>IP</th><th>MAC</th><th>Vendor</th><th>Hostname</th><th>First seen</th><th>Last seen</th><th>Seen #</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in devices %}
+          <tr>
+            <td>{{ d.ip }}</td>
+            <td>{{ d.mac }}</td>
+            <td>{{ d.vendor or "" }}</td>
+            <td>{{ d.hostname or "" }}</td>
+            <td>{{ d.first_seen }}</td>
+            <td>{{ d.last_seen }}</td>
+            <td>{{ d.seen_count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <script>
+      async function runScan(){
+        const s = document.getElementById("status");
+        s.textContent = "Scanning...";
+        const res = await fetch("/api/scan", {method:"POST"});
+        const data = await res.json();
+        if(!res.ok){ s.textContent = "Scan failed"; return; }
+        s.textContent = `Scan ok: ${data.scanned} devices`;
+        setTimeout(()=>location.reload(), 600);
+      }
+    </script>
+  </body>
+</html>
+
